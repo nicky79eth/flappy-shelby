@@ -23,14 +23,61 @@ function FlyingShelbyMark(){
 
 export default function App(){
   const { account, connected, signAndSubmitTransaction } = useWallet();
-  const [last,setLast]=useState(0); const [best,setBest]=useState(0); const [rows,setRows]=useState<Row[]>([]); const [tx,setTx]=useState<string>(); const [saving,setSaving]=useState(false); const [scoreSaved,setScoreSaved]=useState(false); const [restartSignal,setRestartSignal]=useState(0);
-  const refresh=useCallback(async()=>setRows(await leaderboardView(10) as Row[]),[]); useEffect(()=>{refresh()},[refresh]);
-  const gameOver=useCallback((s:number)=>{setLast(s);setBest(b=>Math.max(b,s));setScoreSaved(false);setTx(undefined)},[]);
-  const submit=async()=>{if(!connected||!account||!moduleAddress||last<=0)return;setSaving(true);try{const result=await signAndSubmitTransaction({data:{function:`${moduleAddress}::flappy_score::submit_score`,functionArguments:[last],typeArguments:[]}});setTx(result.hash);setScoreSaved(true);await refresh()}finally{setSaving(false)}};
-  const playAgain=()=>{setLast(0);setScoreSaved(false);setTx(undefined);setRestartSignal(v=>v+1)};
+  const [last,setLast]=useState(0);
+  const [best,setBest]=useState(0);
+  const [rows,setRows]=useState<Row[]>([]);
+  const [tx,setTx]=useState<string>();
+  const [saving,setSaving]=useState(false);
+  const [scoreSaved,setScoreSaved]=useState(false);
+  const [restartSignal,setRestartSignal]=useState(0);
+  const [gameEnded,setGameEnded]=useState(false);
+
+  const refresh=useCallback(async()=>setRows(await leaderboardView(10) as Row[]),[]);
+  useEffect(()=>{refresh()},[refresh]);
+
+  const gameOver=useCallback((s:number)=>{
+    setLast(s);
+    setBest(b=>Math.max(b,s));
+    setScoreSaved(false);
+    setTx(undefined);
+    setGameEnded(true);
+  },[]);
+
+  const submit=async()=>{
+    if(!connected||!account||!moduleAddress||last<=0) return;
+    setSaving(true);
+    try{
+      const result=await signAndSubmitTransaction({data:{function:`${moduleAddress}::flappy_score::submit_score`,functionArguments:[last],typeArguments:[]}});
+      setTx(result.hash);
+      setScoreSaved(true);
+      await refresh();
+    } finally {setSaving(false)}
+  };
+
+  const playAgain=()=>{
+    setLast(0);
+    setScoreSaved(false);
+    setTx(undefined);
+    setGameEnded(false);
+    setRestartSignal(v=>v+1);
+  };
+
   return <main>
     <header><div><div className="brandTitle"><FlyingShelbyMark/><h1>FLAPPY <span>SHELBY</span></h1></div><p>Arcade score • Petra Wallet • On-chain leaderboard</p></div><WalletButton/></header>
-    <section className="layout"><div className="gameWrap"><Game onGameOver={gameOver} restartSignal={restartSignal}/><div className="actions"><div><b>Last</b><strong>{last}</strong></div><div><b>Best</b><strong>{best}</strong></div>{last>0&&<div className="gameButtons"><button onClick={submit} disabled={!connected||saving||scoreSaved}>{saving?'Saving…':scoreSaved?'Saved on-chain':'Save score on-chain'}</button><button className="secondary" onClick={playAgain} disabled={saving}>Play again</button></div>}</div>{tx&&<p className="tx">✓ Submitted: <a href={explorerTxUrl(tx)} target="_blank" rel="noreferrer" title="View transaction on Aptos Explorer">{tx.slice(0,12)}… <span className="external">↗</span></a></p>}</div>
-      <aside><h2>Leaderboard</h2>{rows.length===0?<p className="muted">Deploy Move module to activate on-chain scores.</p>:rows.map((r,i)=><div className="row" key={r.player}><span>#{i+1}</span><code>{r.player.slice(0,6)}…{r.player.slice(-4)}</code><b>{r.score}</b></div>)}<div className="network"><i></i>Shelbynet • Petra Wallet • On-chain</div></aside></section>
+    <section className="layout">
+      <div className="gameWrap">
+        <Game onGameOver={gameOver} restartSignal={restartSignal}/>
+        <div className="actions">
+          <div><b>Last</b><strong>{last}</strong></div>
+          <div><b>Best</b><strong>{best}</strong></div>
+          {gameEnded&&<div className="gameButtons">
+            <button onClick={submit} disabled={!connected||saving||scoreSaved||last<=0}>{saving?'Saving…':scoreSaved?'Saved on-chain':'Save score on-chain'}</button>
+            <button className="secondary" onClick={playAgain} disabled={saving}>Play again</button>
+          </div>}
+        </div>
+        {tx&&<p className="tx">✓ Submitted: <a href={explorerTxUrl(tx)} target="_blank" rel="noreferrer" title="View transaction on Aptos Explorer">{tx.slice(0,12)}… <span className="external">↗</span></a></p>}
+      </div>
+      <aside><h2>Leaderboard</h2>{rows.length===0?<p className="muted">Deploy Move module to activate on-chain scores.</p>:rows.map((r,i)=><div className="row" key={r.player}><span>#{i+1}</span><code>{r.player.slice(0,6)}…{r.player.slice(-4)}</code><b>{r.score}</b></div>)}<div className="network"><i></i>Shelbynet • Petra Wallet • On-chain</div></aside>
+    </section>
   </main>
 }
