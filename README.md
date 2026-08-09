@@ -1,31 +1,59 @@
 # Flappy Shelby
 
-Flappy-style browser game for **Shelbynet** with Petra Wallet and a Move on-chain leaderboard.
+A small Flappy-style game I built while experimenting with **Shelbynet**, Petra Wallet and Move.
 
-## Stack
-- React + Vite + Canvas
-- `@aptos-labs/wallet-adapter-react` for Petra
-- Move smart contract for persistent high scores
-- Shelby React/Browser SDK wired for future replay/assets storage
-- Shelbynet Aptos fullnode: `https://api.shelbynet.shelby.xyz/v1`
+The game is simple: keep the Shelby flyer in the air, get through the pipes, and try to beat your best score. If a run is worth keeping, you can sign it with Petra and submit the score on-chain. Low score? Just hit Play again and skip the transaction.
 
-> Shelby docs describe `shelbynet` as a developer prototype network isolated from Aptos mainnet/testnet/devnet and warn that it may be wiped roughly weekly.
+**Play:** https://flappyshelby.vercel.app/
 
-## Run frontend
+## What I wanted to build
+
+I wanted something more fun than a basic wallet-connect demo, so I used a Flappy Bird-style game as the frontend and connected the score system to a Move contract on Shelbynet.
+
+Right now it has:
+
+- Canvas-based Flappy gameplay
+- Petra Wallet connection
+- score submission on Shelbynet
+- on-chain leaderboard
+- transaction links to Aptos Explorer
+- Shelby-themed UI
+- separate Save score / Play again flow after each run
+
+## Tech
+
+Frontend is React + Vite + Canvas. Wallet interaction uses `@aptos-labs/wallet-adapter-react`, and the leaderboard lives in a Move module.
+
+Shelbynet fullnode:
+
+```text
+https://api.shelbynet.shelby.xyz/v1
+```
+
+Shelbynet is a test/developer network, so I don't treat the leaderboard as permanent data.
+
+## Run it locally
+
 ```bash
 npm install
 cp .env.example .env
 npm run dev
 ```
 
-In Petra, switch the network to **Shelbynet** before connecting.
+Make sure Petra is switched to **Shelbynet** before connecting.
 
-## Deploy Move module on Shelbynet
-1. Install Aptos CLI.
-2. Create/import a CLI profile using the same deployment account you want for the module.
-3. Configure the profile against the Shelbynet fullnode/faucet (`https://api.shelbynet.shelby.xyz/v1`, `https://faucet.shelbynet.shelby.xyz`).
-4. Fund the account with test APT.
-5. Compile/publish:
+Example `.env`:
+
+```env
+VITE_MODULE_ADDRESS=<YOUR_ADDRESS>
+VITE_APTOS_SHELBYNET_FULLNODE=https://api.shelbynet.shelby.xyz/v1
+```
+
+## Move contract
+
+The contract is in the `move/` directory.
+
+To publish your own version:
 
 ```bash
 cd move
@@ -34,16 +62,16 @@ aptos move publish --named-addresses flappy_shelby=<YOUR_ADDRESS>
 aptos move run --function-id <YOUR_ADDRESS>::flappy_score::init
 ```
 
-Set the deployed address in `.env`:
-```env
-VITE_MODULE_ADDRESS=<YOUR_ADDRESS>
-VITE_APTOS_SHELBYNET_FULLNODE=https://api.shelbynet.shelby.xyz/v1
-```
+Once the module address is added to the frontend env, players can call `submit_score(score)` from Petra and the app reads the ranking from `leaderboard()`.
 
-Restart the frontend. Each player can then sign `submit_score(score)` using Petra; `leaderboard()` reads the current on-chain ranking.
+## A note about scores
 
-## Anti-cheat
-The MVP stores scores on-chain, but the browser computes the score, so an advanced user could craft a transaction with a fake score. Before attaching rewards, add session nonces + signed replay/game-event verification (or a trusted verifier) and only commit verified scores.
+This is still an arcade/testnet project. The score is calculated in the browser, so the current version isn't designed for prize money or anything that needs serious anti-cheat protection. If I take it further, replay verification or a trusted score verifier would be the next thing I'd add.
 
-## Shelby storage extension
-The project already includes Shelby SDK setup. A production version can store replay blobs, season snapshots, screenshots and game assets on Shelby, while the Move module keeps compact authoritative leaderboard state.
+## Links
+
+- Game: https://flappyshelby.vercel.app/
+- X: https://x.com/0xNickyy
+- Shelby docs: https://docs.shelby.xyz/
+
+Built for fun while testing what I can do on Shelbynet.
