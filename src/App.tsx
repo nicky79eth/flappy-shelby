@@ -50,7 +50,6 @@ export default function App(){
   };
 
   const playAgain=()=>{
-    if(!scoreSaved) return;
     setLast(0);
     setScoreSaved(false);
     setTx(undefined);
@@ -65,9 +64,10 @@ export default function App(){
         <div className="actions">
           <div><b>Last</b><strong>{last}</strong></div>
           <div><b>Best</b><strong>{best}</strong></div>
-          {!scoreSaved
-            ? <button onClick={submit} disabled={!connected||last<=0||saving}>{saving?'Saving…':'Save score on-chain'}</button>
-            : <button onClick={playAgain}>Play again</button>}
+          {last>0 && <div className="gameButtons">
+            <button onClick={submit} disabled={!connected||saving||scoreSaved}>{saving?'Saving…':scoreSaved?'Saved on-chain':'Save score on-chain'}</button>
+            <button className="secondary" onClick={playAgain} disabled={saving}>Play again</button>
+          </div>}
         </div>
         {tx&&<p className="tx">✓ Submitted: <a href={explorerTxUrl(tx)} target="_blank" rel="noreferrer" title="View transaction on Aptos Explorer">{tx.slice(0,12)}… <span className="external">↗</span></a></p>}
       </div>
