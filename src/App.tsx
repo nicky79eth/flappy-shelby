@@ -7,6 +7,17 @@ import { leaderboardView, moduleAddress } from './lib/chain';
 type Row={player:string;score:string};
 const explorerTxUrl=(hash:string)=>`https://explorer.aptoslabs.com/txn/${hash}?network=shelbynet`;
 
+function FlyingShelbyMark(){
+  return <svg className="titleLogo" viewBox="0 0 84 44" aria-hidden="true">
+    <g fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M32 22 23 15 13 7l3 12-10-5 8 11-8 2 15 8 11-6"/>
+      <path d="m52 22 9-7 10-8-3 12 10-5-8 11 8 2-15 8-11-6"/>
+      <path d="m34 13 8-5 8 5 6 9-6 9-8 5-8-5-6-9z"/>
+      <path d="m34 13 8 9 8-9M28 22l14 14 14-14M34 31l8-9 8 9"/>
+    </g>
+  </svg>;
+}
+
 export default function App(){
   const { account, connected, signAndSubmitTransaction } = useWallet();
   const [last,setLast]=useState(0);
@@ -47,7 +58,7 @@ export default function App(){
   };
 
   return <main>
-    <header><div><h1>FLAPPY <span>SHELBY</span></h1><p>Arcade score • Petra • On-chain leaderboard</p></div><WalletButton/></header>
+    <header><div><div className="brandTitle"><FlyingShelbyMark/><h1>FLAPPY <span>SHELBY</span></h1></div><p>Arcade score • Petra • On-chain leaderboard</p></div><WalletButton/></header>
     <section className="layout">
       <div className="gameWrap">
         <Game onGameOver={gameOver} restartSignal={restartSignal}/>
