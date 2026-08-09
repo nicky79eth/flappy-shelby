@@ -66,7 +66,6 @@ export default function Game({onGameOver}:Props){
         ctx.fillRect((i*97+state.current.frame*.12)%W,(i*53)%H,2,2);
       }
       ctx.globalAlpha=1;
-      ctx.fillStyle='#ff4fa5'; ctx.font='800 20px system-ui'; ctx.fillText('SHELBYNET',18,30);
       const s=state.current;
       if(running){
         s.frame++; s.vy += .42; s.y += s.vy;
