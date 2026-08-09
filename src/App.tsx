@@ -6,6 +6,7 @@ import { leaderboardView, moduleAddress } from './lib/chain';
 
 type Row={player:string;score:string};
 const explorerTxUrl=(hash:string)=>`https://explorer.aptoslabs.com/txn/${hash}?network=shelbynet`;
+const SHELBY_LOGO='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAoCAYAAACFFRgXAAABoklEQVR42u1XMU7EMBDcjYDyWiLR8gYKkBt+gLagoKLgOq7gARQgSq65jvsAjT/BCgoegrgWSnQyTZAOdLHX9jrKoYyUKrI9nszuTgAGDPgF1NzMGeuSSDCJeVR9UC3motqE90qTViWMTG+ZSj+qEnbGuua50PDjGpyWUvghsqAWWtbAjI2+kGln5X0FAMuQ0s7YdwDYTe0aOR7e/nOZpUQpZKpDtvGpXOV8ph9Pl+69UYSdsVelWpWPdNtaicL3gQNHAdLHgf3PPWvvoorOp9CqOgJbjJDpM/cctcEh8ONHoH+fZIefgGoLZKo1gk9sEVaJm9fKEy6vSzhjD/qahyvYMFQtn/z1XynsjH3W+tuIxZavaj0kDhPPGyPTPKIrzZBpIiLc1QgOrL8EgInYEimzfg3OOv1rbsJPW56YNSqUUHft2mDRIdPU87oYWQAYJ3eJtoORCVMnnMD382KDoyG9L7mkJPT7RMBUVQQFeY1Mt85YAwBPWkEoVWFJ5d80xNXIRvdhiV8zJ97LRoUfZDrqlHCOukUDfAFlEQYMGNBPfANkPc/OA0joEQAAAABJRU5ErkJggg==';
 
 function FlyingShelbyMark(){
   const wing=(side:number)=><g transform={`translate(42 22) scale(${side} 1)`}>
@@ -14,10 +15,7 @@ function FlyingShelbyMark(){
   </g>;
   return <svg className="titleLogo" viewBox="0 0 84 44" aria-hidden="true">
     <g fill="rgba(255,47,146,.16)" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">{wing(-1)}{wing(1)}</g>
-    <g transform="translate(42 22)" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-      <path d="m-8-9 8-5 8 5 6 9-6 9-8 5-8-5-6-9z"/>
-      <path d="m-8-9 8 9 8-9M-14 0 0 14 14 0M-8 9 0 0 8 9"/>
-    </g>
+    <image href={SHELBY_LOGO} x="21" y="3" width="42" height="38" preserveAspectRatio="xMidYMid meet"/>
   </svg>;
 }
 
