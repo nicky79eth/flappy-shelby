@@ -1,0 +1,119 @@
+name: Deploy Move to Shelbynet
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SHELBYNET_FULLNODE: https://api.shelbynet.shelby.xyz/v1
+      SHELBYNET_FAUCET: https://faucet.shelbynet.shelby.xyz
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Aptos CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y jq unzip curl
+
+          TAG=$(curl -fsSL 'https://api.github.com/repos/aptos-labs/aptos-core/releases?per_page=100' \
+            | jq -r '[.[] | select(.tag_name | startswith("aptos-cli-v"))][0].tag_name')
+          echo "Using Aptos CLI release: $TAG"
+
+          RELEASE=$(curl -fsSL "https://api.github.com/repos/aptos-labs/aptos-core/releases/tags/$TAG")
+          URL=$(echo "$RELEASE" \
+            | jq -r '.assets[] | select(.name | test("(Ubuntu|Linux).*(x86_64|amd64).*\\.zip$"; "i")) | .browser_download_url' \
+            | head -n 1)
+
+          if [ -z "$URL" ] || [ "$URL" = "null" ]; then
+            echo "Could not find a Linux x86_64 Aptos CLI asset for $TAG"
+            exit 1
+          fi
+
+          curl -fL "$URL" -o /tmp/aptos-cli.zip
+          mkdir -p /tmp/aptos-cli
+          unzip -q /tmp/aptos-cli.zip -d /tmp/aptos-cli
+          APTOS_BIN=$(find /tmp/aptos-cli -type f -name aptos | head -n 1)
+          chmod +x "$APTOS_BIN"
+          sudo mv "$APTOS_BIN" /usr/local/bin/aptos
+          aptos --version
+
+      - name: Configure Shelbynet deployer
+        shell: bash
+        env:
+          APTOS_PRIVATE_KEY: ${{ secrets.APTOS_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APTOS_PRIVATE_KEY:-}" ]; then
+            echo "Missing GitHub Actions secret: APTOS_PRIVATE_KEY"
+            exit 1
+          fi
+
+          aptos init \
+            --profile shelbynet-deployer \
+            --assume-yes \
+            --private-key "$APTOS_PRIVATE_KEY" \
+            --network custom \
+            --rest-url "$SHELBYNET_FULLNODE" \
+            --faucet-url "$SHELBYNET_FAUCET"
+
+          DEPLOYER_ADDRESS=$(awk '/shelbynet-deployer:/{found=1; next} found && /account:/{print $2; exit}' ~/.aptos/config.yaml | tr -d '"')
+          if [ -z "$DEPLOYER_ADDRESS" ]; then
+            echo "Could not determine deployer address from Aptos profile"
+            exit 1
+          fi
+
+          echo "DEPLOYER_ADDRESS=$DEPLOYER_ADDRESS" >> "$GITHUB_ENV"
+          echo "Deployer: $DEPLOYER_ADDRESS"
+
+      - name: Compile Move package
+        shell: bash
+        run: |
+          set -euo pipefail
+          aptos move compile \
+            --package-dir move \
+            --named-addresses "flappy_shelby=${DEPLOYER_ADDRESS}"
+
+      - name: Publish Move package
+        shell: bash
+        run: |
+          set -euo pipefail
+          aptos move publish \
+            --package-dir move \
+            --named-addresses "flappy_shelby=${DEPLOYER_ADDRESS}" \
+            --profile shelbynet-deployer \
+            --assume-yes
+
+      - name: Initialize scoreboard
+        shell: bash
+        run: |
+          set -euo pipefail
+          aptos move run \
+            --function-id "${DEPLOYER_ADDRESS}::flappy_score::init" \
+            --profile shelbynet-deployer \
+            --assume-yes
+
+      - name: Deployment summary
+        shell: bash
+        run: |
+          {
+            echo '## Flappy Shelby deployed'
+            echo ''
+            echo "- Network: Shelbynet"
+            echo "- Module address: \`${DEPLOYER_ADDRESS}\`"
+            echo "- Module: \`${DEPLOYER_ADDRESS}::flappy_score\`"
+            echo "- Fullnode: ${SHELBYNET_FULLNODE}"
+            echo ''
+            echo 'Set this value in the frontend:'
+            echo '```env'
+            echo "VITE_MODULE_ADDRESS=${DEPLOYER_ADDRESS}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
