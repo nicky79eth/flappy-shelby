@@ -71,7 +71,7 @@ export default function App(){
         </div>
         {tx&&<p className="tx">✓ Submitted: <a href={explorerTxUrl(tx)} target="_blank" rel="noreferrer" title="View transaction on Aptos Explorer">{tx.slice(0,12)}… <span className="external">↗</span></a></p>}
       </div>
-      <aside><h2>Leaderboard</h2>{rows.length===0?<p className="muted">Deploy Move module to activate on-chain scores.</p>:rows.map((r,i)=><div className="row" key={r.player}><span>#{i+1}</span><code>{r.player.slice(0,6)}…{r.player.slice(-4)}</code><b>{r.score}</b></div>)}<div className="network"><i></i>Shelbynet • Petra • On-chain</div></aside>
+      <aside><h2>Leaderboard</h2>{rows.length===0?<p className="muted">Deploy Move module to activate on-chain scores.</p>:rows.map((r,i)=><div className="row" key={r.player}><span>#{i+1}</span><code>{r.player.slice(0,6)}…{r.player.slice(-4)}</code><b>{r.score}</b></div>)}<div className="network"><i></i>Shelbynet • Petra Wallet • On-chain</div></aside>
     </section>
   </main>
 }
