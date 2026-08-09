@@ -1,15 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
 
 type Props = { onGameOver:(score:number)=>void };
-
 type Pipe = { x:number; gapY:number; counted:boolean };
+
+const SHELBY_LOGO = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACwAAAAoCAYAAACFFRgXAAABoklEQVR42u1XMU7EMBDcjYDyWiLR8gYKkBt+gLagoKLgOq7gARQgSq65jvsAjT/BCgoegrgWSnQyTZAOdLHX9jrKoYyUKrI9nszuTgAGDPgF1NzMGeuSSDCJeVR9UC3motqE90qTViWMTG+ZSj+qEnbGuua50PDjGpyWUvghsqAWWtbAjI2+kGln5X0FAMuQ0s7YdwDYTe0aOR7e/nOZpUQpZKpDtvGpXOV8ph9Pl+69UYSdsVelWpWPdNtaicL3gQNHAdLHgf3PPWvvoorOp9CqOgJbjJDpM/cctcEh8ONHoH+fZIefgGoLZKo1gk9sEVaJm9fKEy6vSzhjD/qahyvYMFQtn/z1XynsjH3W+tuIxZavaj0kDhPPGyPTPKIrzZBpIiLc1QgOrL8EgInYEimzfg3OOv1rbsJPW56YNSqUUHft2mDRIdPU87oYWQAYJ3eJtoORCVMnnMD382KDoyG9L7mkJPT7RMBUVQQFeY1Mt85YAwBPWkEoVWFJ5d80xNXIRvdhiV8zJ97LRoUfZDrqlHCOukUDfAFlEQYMGNBPfANkPc/OA0joEQAAAABJRU5ErkJggg==';
 
 export default function Game({onGameOver}:Props){
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const logoRef = useRef<HTMLImageElement | null>(null);
   const raf = useRef(0);
   const [score,setScore] = useState(0);
   const [running,setRunning] = useState(false);
   const state = useRef({ y:220, vy:0, pipes:[] as Pipe[], frame:0, score:0 });
+
+  useEffect(()=>{
+    const logo = new Image();
+    logo.src = SHELBY_LOGO;
+    logoRef.current = logo;
+  },[]);
 
   const reset = () => {
     state.current = { y:220, vy:0, pipes:[], frame:0, score:0 };
@@ -57,10 +65,22 @@ export default function Game({onGameOver}:Props){
         ctx.fillStyle='#ff8ac7';ctx.fillRect(p.x-5,p.gapY-84,72,12);ctx.fillRect(p.x-5,p.gapY+72,72,12);
         ctx.shadowBlur=0;
       }
-      ctx.save();ctx.translate(88,state.current.y);ctx.rotate(Math.min(.45,state.current.vy*.04));
-      ctx.shadowColor='#ff2f92';ctx.shadowBlur=18;
-      ctx.fillStyle='#ff4fa5';ctx.beginPath();ctx.arc(0,0,16,0,Math.PI*2);ctx.fill();
-      ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.fillRect(5,-7,7,7);ctx.fillStyle='#111';ctx.fillRect(9,-5,3,3);ctx.fillStyle='#ffd24a';ctx.fillRect(11,2,15,6);ctx.restore();
+
+      ctx.save();
+      ctx.translate(88,state.current.y);
+      ctx.rotate(Math.min(.45,state.current.vy*.04));
+      ctx.shadowColor='#ff2f92';
+      ctx.shadowBlur=18;
+      const logo=logoRef.current;
+      if(logo?.complete){
+        ctx.drawImage(logo,-21,-19,42,38);
+      } else {
+        ctx.fillStyle='#ff3dad';
+        ctx.beginPath();ctx.arc(0,0,17,0,Math.PI*2);ctx.fill();
+      }
+      ctx.shadowBlur=0;
+      ctx.restore();
+
       ctx.fillStyle='#fff';ctx.font='800 36px system-ui';ctx.textAlign='center';ctx.fillText(String(score),W/2,56);ctx.textAlign='start';
       if(!running){ctx.fillStyle='rgba(3,2,10,.5)';ctx.fillRect(0,0,W,H);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.font='800 28px system-ui';ctx.fillText(state.current.frame?'GAME OVER':'FLAPPY SHELBY',W/2,H/2-30);ctx.font='16px system-ui';ctx.fillStyle='#ff74bb';ctx.fillText('Click / Space to flap',W/2,H/2+10);ctx.textAlign='start'}
       raf.current=requestAnimationFrame(draw);
