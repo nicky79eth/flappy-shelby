@@ -80,12 +80,16 @@ export default function Game({onGameOver}:Props){
       }
       for(const p of s.pipes){
         const pg=ctx.createLinearGradient(p.x,0,p.x+62,0);
-        pg.addColorStop(0,'#bd1769'); pg.addColorStop(.52,'#ff2f92'); pg.addColorStop(1,'#ff75bc');
+        pg.addColorStop(0,'#5aa889');
+        pg.addColorStop(.52,'#74c9a8');
+        pg.addColorStop(1,'#9be2c5');
         ctx.fillStyle=pg;
         ctx.fillRect(p.x,0,62,p.gapY-72);
         ctx.fillRect(p.x,p.gapY+72,62,H-(p.gapY+72));
-        ctx.shadowColor='#ff2f92';ctx.shadowBlur=10;
-        ctx.fillStyle='#ff8ac7';ctx.fillRect(p.x-5,p.gapY-84,72,12);ctx.fillRect(p.x-5,p.gapY+72,72,12);
+        ctx.shadowColor='rgba(116,201,168,.72)';ctx.shadowBlur=8;
+        ctx.fillStyle='#b7ecd6';
+        ctx.fillRect(p.x-5,p.gapY-84,72,12);
+        ctx.fillRect(p.x-5,p.gapY+72,72,12);
         ctx.shadowBlur=0;
       }
 
