@@ -33,6 +33,30 @@ export default function Game({onGameOver}:Props){
   useEffect(()=>{
     const c=canvasRef.current; if(!c) return; const ctx=c.getContext('2d')!;
     const W=c.width,H=c.height;
+    const drawWing=(side:number, flapPhase:number)=>{
+      ctx.save();
+      ctx.scale(side,1);
+      ctx.strokeStyle='#ff5bb5';
+      ctx.fillStyle='rgba(255,47,146,.16)';
+      ctx.lineWidth=2.2;
+      ctx.lineJoin='round';
+      ctx.shadowColor='#ff2f92';
+      ctx.shadowBlur=10;
+      ctx.beginPath();
+      ctx.moveTo(14,-3);
+      ctx.quadraticCurveTo(25,-17-flapPhase,34,-22-flapPhase);
+      ctx.quadraticCurveTo(31,-12-flapPhase*.5,27,-7);
+      ctx.quadraticCurveTo(34,-11-flapPhase*.35,39,-9-flapPhase*.25);
+      ctx.quadraticCurveTo(33,-2,25,3);
+      ctx.quadraticCurveTo(31,1,35,4);
+      ctx.quadraticCurveTo(27,9,16,9);
+      ctx.closePath();
+      ctx.fill();ctx.stroke();
+      ctx.globalAlpha=.75;
+      ctx.beginPath();ctx.moveTo(18,-1);ctx.quadraticCurveTo(27,-10-flapPhase*.6,33,-15-flapPhase*.5);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(19,3);ctx.quadraticCurveTo(27,0,33,-4-flapPhase*.2);ctx.stroke();
+      ctx.restore();
+    };
     const draw=()=>{
       ctx.clearRect(0,0,W,H);
       const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#170a2a'); g.addColorStop(1,'#070913'); ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
@@ -69,6 +93,9 @@ export default function Game({onGameOver}:Props){
       ctx.save();
       ctx.translate(88,state.current.y);
       ctx.rotate(Math.min(.45,state.current.vy*.04));
+      const flapPhase = running ? Math.sin(state.current.frame*.32)*5 : 0;
+      drawWing(-1,flapPhase);
+      drawWing(1,flapPhase);
       ctx.shadowColor='#ff2f92';
       ctx.shadowBlur=18;
       const logo=logoRef.current;
