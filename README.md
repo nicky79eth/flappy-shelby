@@ -47,7 +47,13 @@ Example `.env`:
 ```env
 VITE_MODULE_ADDRESS=<YOUR_ADDRESS>
 VITE_APTOS_SHELBYNET_FULLNODE=https://api.shelbynet.shelby.xyz/v1
+VITE_SHELBY_API_KEY=<YOUR_CLIENT_API_KEY>
 ```
+
+Use a Shelby **Client** API key and allow the game's website URL. The key is
+sent as a Bearer token by the Aptos SDK when the game reads ShelbyNet data.
+Keep the real value in `.env.local` or Vercel Environment Variables; do not
+commit it to GitHub.
 
 ## Move contract
 
