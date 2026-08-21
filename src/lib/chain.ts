@@ -1,9 +1,12 @@
 import { Aptos, AptosConfig, Network } from '@aptos-labs/ts-sdk';
 
 const fullnode = import.meta.env.VITE_APTOS_SHELBYNET_FULLNODE || 'https://api.shelbynet.shelby.xyz/v1';
+const apiKey = import.meta.env.VITE_SHELBY_API_KEY?.trim();
+
 export const aptos = new Aptos(new AptosConfig({
   network: Network.CUSTOM,
   fullnode,
+  clientConfig: apiKey ? { API_KEY: apiKey } : undefined,
 }));
 
 const DEFAULT_MODULE_ADDRESS = '0xf343f26657088d01fe41a7d8941131e64bfb248cb41a6635d7cd7210ff3f2c25';
