@@ -14,42 +14,14 @@ function PetraMark(){return <img className="networkLogo petraLogo" src={PETRA_LO
 
 export default function App(){
   const { account, connected, signAndSubmitTransaction } = useWallet();
-  const [last,setLast]=useState(0); const [best,setBest]=useState(0); const [rows,setRows]=useState<Row[]>([]); const [tx,setTx]=useState<string>(); const [saving,setSaving]=useState(false); const [scoreSaved,setScoreSaved]=useState(false); const [restartSignal,setRestartSignal]=useState(0); const [gameEnded,setGameEnded]=useState(false); const [initializing,setInitializing]=useState(false);
-  const refresh=useCallback(async()=>setRows(await leaderboardView(10) as Row[]),[]); useEffect(()=>{refresh()},[refresh]);
+  const [last,setLast]=useState(0); const [best,setBest]=useState(0); const [rows,setRows]=useState<Row[]>([]); const [tx,setTx]=useState<string>(); const [saving,setSaving]=useState(false); const [scoreSaved,setScoreSaved]=useState(false); const [restartSignal,setRestartSignal]=useState(0); const [gameEnded,setGameEnded]=useState(false); const [refreshing,setRefreshing]=useState(false);
+  const refresh=useCallback(async()=>{setRefreshing(true);try{setRows(await leaderboardView(10) as Row[])}finally{setRefreshing(false)}},[]); useEffect(()=>{refresh()},[refresh]);
   const gameOver=useCallback((s:number)=>{setLast(s);setBest(b=>Math.max(b,s));setScoreSaved(false);setTx(undefined);setGameEnded(true)},[]);
-  const submit=async()=>{if(!connected||!account||!moduleAddress||last<=0)return;setSaving(true);try{const result=await signAndSubmitTransaction({data:{function:`${moduleAddress}::flappy_score::submit_score`,functionArguments:[last],typeArguments:[]}});setTx(result.hash);setScoreSaved(true);await refresh()}finally{setSaving(false)}};
-  const initializeScoreBoard=async()=>{
-    if(!connected||!account){
-      alert('Please connect Petra Wallet first.');
-      return;
-    }
-    if(account.address.toString().toLowerCase()!==moduleAddress.toLowerCase()){
-      alert('Connected wallet does not match the publisher address.');
-      return;
-    }
-    setInitializing(true);
-    try{
-      const result=await signAndSubmitTransaction({
-        data:{
-          function:`${moduleAddress}::flappy_score::init`,
-          functionArguments:[],
-          typeArguments:[]
-        }
-      });
-      await aptos.waitForTransaction({transactionHash:result.hash});
-      alert(`ScoreBoard initialized! Transaction: ${result.hash}`);
-      await refresh();
-    }catch(error){
-      console.error(error);
-      alert(error instanceof Error?error.message:'Initialization failed.');
-    }finally{
-      setInitializing(false);
-    }
-  };
+  const submit=async()=>{if(!connected||!account||!moduleAddress||last<=0)return;setSaving(true);try{const result=await signAndSubmitTransaction({data:{function:`${moduleAddress}::flappy_score::submit_score`,functionArguments:[last],typeArguments:[]}});await aptos.waitForTransaction({transactionHash:result.hash});setTx(result.hash);setScoreSaved(true);await refresh()}catch(error){console.error(error);alert(error instanceof Error?error.message:'Could not save score.')}finally{setSaving(false)}};
   const playAgain=()=>{setLast(0);setScoreSaved(false);setTx(undefined);setGameEnded(false);setRestartSignal(v=>v+1)};
   return <main>
     <header><div><div className="brandTitle"><FlyingShelbyMark/><h1>Flappy <span>Shelby</span></h1></div><p>Arcade score • Petra Wallet • On-chain leaderboard</p></div><WalletButton/></header>
-    <section className="layout"><div className="gameWrap"><Game onGameOver={gameOver} restartSignal={restartSignal}/><div className="actions"><div><b>Last</b><strong>{last}</strong></div><div><b>Best</b><strong>{best}</strong></div>{gameEnded&&<div className="gameButtons"><button onClick={submit} disabled={!connected||saving||scoreSaved||last<=0}>{saving?'Saving…':scoreSaved?'Saved on-chain':'Save score on-chain'}</button><button className="secondary" onClick={playAgain} disabled={saving}>Play again</button></div>}</div>{tx&&<p className="tx">✓ Submitted: <a href={explorerTxUrl(tx)} target="_blank" rel="noreferrer">{tx.slice(0,12)}… <span className="external">↗</span></a></p>}</div><aside><h2>Leaderboard</h2><button className="secondary" onClick={initializeScoreBoard} disabled={!connected||initializing}>{initializing?'Initializing...':'Initialize ScoreBoard'}</button>{rows.length===0?<p className="muted">Deploy Move module to activate on-chain scores.</p>:rows.map((r,i)=><div className="row" key={r.player}><span>#{i+1}</span><code>{r.player.slice(0,6)}…{r.player.slice(-4)}</code><b>{r.score}</b></div>)}<div className="network"><span className="networkItem"><img className="networkLogo" src={SHELBY_LOGO} alt="" aria-hidden="true"/>Shelbynet</span><span>•</span><span className="networkItem"><PetraMark/>Petra Wallet</span><span>•</span><span>On-chain</span></div></aside></section>
+    <section className="layout"><div className="gameWrap"><Game onGameOver={gameOver} restartSignal={restartSignal}/><div className="actions"><div><b>Last</b><strong>{last}</strong></div><div><b>Best</b><strong>{best}</strong></div>{gameEnded&&<div className="gameButtons"><button onClick={submit} disabled={!connected||saving||scoreSaved||last<=0}>{saving?'Saving…':scoreSaved?'Saved on-chain':'Save score on-chain'}</button><button className="secondary" onClick={playAgain} disabled={saving}>Play again</button></div>}</div>{tx&&<p className="tx">✓ Submitted: <a href={explorerTxUrl(tx)} target="_blank" rel="noreferrer">{tx.slice(0,12)}… <span className="external">↗</span></a></p>}</div><aside><div className="leaderboardHeader"><h2>Leaderboard</h2><button className="secondary refreshButton" onClick={refresh} disabled={refreshing}>{refreshing?'Refreshing...':'Refresh'}</button></div>{rows.length===0?<p className="muted">No scores yet. Be the first to play!</p>:rows.map((r,i)=><div className="row" key={r.player}><span>#{i+1}</span><code title={r.player}>{r.player}</code><b>{r.score}</b></div>)}<div className="network"><span className="networkItem"><img className="networkLogo" src={SHELBY_LOGO} alt="" aria-hidden="true"/>Shelbynet</span><span>•</span><span className="networkItem"><PetraMark/>Petra Wallet</span><span>•</span><span>On-chain</span></div></aside></section>
     <footer className="siteFooter"><div className="footerInfo"><strong>Flappy Shelby</strong><span>Built on Shelbynet · On-chain Arcade Game</span><small>Scores are submitted on-chain through Petra Wallet.</small></div><nav className="footerLinks" aria-label="Project links"><a href="https://github.com/nicky79eth/flappy-shelby" target="_blank" rel="noreferrer">GitHub ↗</a><a href="https://x.com/0xNickyy" target="_blank" rel="noreferrer">X ↗</a><a href="https://docs.shelby.xyz/" target="_blank" rel="noreferrer">Docs ↗</a></nav></footer>
   </main>
 }
